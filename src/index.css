@@ -1,0 +1,145 @@
+body {
+  margin: 0;
+}
+
+/* Todo lo de la demo lleva el prefijo «demo-». Este archivo se importa después
+   de @mantine/core/styles.css, así que a igual especificidad gana el de aquí. */
+
+:root {
+  /* Curva de salida (empieza rápido y frena): se siente más ágil que ease-in. */
+  --demo-ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+/* ---- Lista «etiqueta → valor» (revisión, reserva confirmada, «Tu cita») ---- */
+
+.demo-datos {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 6px 16px;
+  margin: 0;
+}
+
+.demo-datos dt {
+  font-size: var(--mantine-font-size-sm);
+  color: var(--mantine-color-dimmed);
+}
+
+.demo-datos dd {
+  margin: 0;
+  font-weight: 500;
+  /* Un nombre largo sin espacios no debe provocar scroll horizontal a 360 px. */
+  overflow-wrap: anywhere;
+}
+
+.demo-datos dd.demo-datos-vacio {
+  font-weight: 400;
+  color: var(--mantine-color-dimmed);
+}
+
+/* Un campo de una rejilla que ocupa toda la fila (con una sola columna no
+   cambia nada). */
+.demo-campo-ancho {
+  grid-column: 1 / -1;
+}
+
+/* ---- Turnos (Radio.Card) ---- */
+
+.demo-turno {
+  padding: var(--mantine-spacing-sm) var(--mantine-spacing-md);
+  background: var(--mantine-color-white);
+  /* Solo la pulsación se anima (transform). El cambio de seleccionado es
+     instantáneo: con las flechas del teclado se cambia muy seguido. */
+  transition: transform 120ms var(--demo-ease-out);
+}
+
+/* Seleccionado: borde + anillo + fondo (no solo color) y, además, el punto del
+   indicador. */
+.demo-turno[data-checked] {
+  border-color: var(--mantine-color-clinica-7);
+  background: var(--mantine-color-clinica-0);
+  box-shadow: inset 0 0 0 1px var(--mantine-color-clinica-7);
+}
+
+/* Ocupado: la información está en el texto «HH:MM — Ocupado»; el gris 7 se lee. */
+.demo-turno:disabled {
+  cursor: not-allowed;
+  background: var(--mantine-color-gray-1);
+  border-style: dashed;
+  color: var(--mantine-color-gray-7);
+}
+
+.demo-turno:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* El hover solo en dispositivos con puntero fino: en el móvil «se queda pegado». */
+@media (hover: hover) and (pointer: fine) {
+  .demo-turno:hover:not(:disabled):not([data-checked]) {
+    border-color: var(--mantine-color-clinica-4);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-turno:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* ---- Icono de éxito del cuadro «Reserva confirmada» (una sola vez) ---- */
+
+.demo-exito-icono {
+  /* inline-flex: transform no se aplica a un elemento en línea. */
+  display: inline-flex;
+  animation: demo-aparecer 220ms var(--demo-ease-out) both;
+}
+
+@keyframes demo-aparecer {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+@keyframes demo-fundido {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-exito-icono {
+    animation-name: demo-fundido;
+  }
+}
+
+/* ---- Tarjeta de una reserva confirmada ---- */
+
+.demo-reserva {
+  /* Un nombre largo sin espacios no debe provocar scroll horizontal. */
+  overflow-wrap: anywhere;
+  /* Entrada de una tarjeta nueva (@starting-style: sin JavaScript; los
+     navegadores que no lo entienden la muestran sin animación). */
+  transition:
+    opacity 220ms var(--demo-ease-out),
+    transform 220ms var(--demo-ease-out);
+}
+
+@starting-style {
+  .demo-reserva {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .demo-reserva {
+    transition: opacity 200ms ease;
+  }
+
+  @starting-style {
+    .demo-reserva {
+      opacity: 0;
+      transform: none;
+    }
+  }
+}
