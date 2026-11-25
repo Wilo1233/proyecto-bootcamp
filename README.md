@@ -1,5 +1,7 @@
 # proyecto-bootcamp
 
+[![CI](https://github.com/Wilo1233/proyecto-bootcamp/actions/workflows/ci.yml/badge.svg)](https://github.com/Wilo1233/proyecto-bootcamp/actions/workflows/ci.yml)
+
 Proyecto de curso: reserva de turnos para un consultorio médico privado.
 
 ## Qué hay en este repositorio
@@ -30,6 +32,10 @@ Abre en el navegador la dirección que muestra la terminal (normalmente `http://
 | `pnpm lint` | Ejecuta oxlint. |
 | `pnpm preview` | Sirve localmente la versión generada por `pnpm build`. |
 
+## Integración continua
+
+El workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) se ejecuta en cada `push` y en cada `pull_request`. Instala las dependencias con `pnpm install --frozen-lockfile` (Node 24; la versión de pnpm sale de `packageManager`) y ejecuta `pnpm build`, que incluye la revisión de tipos. Si hay un error de tipos o de compilación, la ejecución falla y GitHub marca el commit en rojo. Las ejecuciones se ven en la pestaña [Actions](https://github.com/Wilo1233/proyecto-bootcamp/actions). La entrega del Taller 5, con las capturas de una ejecución fallida a propósito y de su corrección, está en [`docs/entregas/taller-05-ci.pdf`](docs/entregas/taller-05-ci.pdf).
+
 ## Documentación
 
-Todo está en [`docs/`](docs/). Para saber cómo se demuestra la demo paso a paso y en qué se diferencia de lo aprobado, mira las secciones «Demo de reserva pedida por el docente (tarea 3, 2026-11-12)», «Mejoras de la demo (tarea 4, 2026-11-14)» y «Rediseño visual de la demo (tarea 5, 2026-11-14)» de [`docs/proceso.md`](docs/proceso.md). La última describe el aspecto actual, el recorrido paso a paso actualizado y cómo se comprobó.
+Todo está en [`docs/`](docs/). Para saber cómo se demuestra la demo paso a paso y en qué se diferencia de lo aprobado, mira las secciones «Demo de reserva pedida por el docente (tarea 3, 2026-11-12)», «Mejoras de la demo (tarea 4, 2026-11-14)» y «Rediseño visual de la demo (tarea 5, 2026-11-14)» de [`docs/proceso.md`](docs/proceso.md). La última describe el aspecto actual, el recorrido paso a paso actualizado y cómo se comprobó. La sección «Taller 5: integración continua con GitHub Actions (tarea 6, 2026-11-24)» explica el pipeline y la prueba con error.

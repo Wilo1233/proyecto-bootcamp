@@ -1535,3 +1535,40 @@ Cómo usé la IA. Usé Claude Code con AHK 3.0.0 y el MCP del proyecto para el t
   9. Ancho de móvil: con la ventana a 360 px no hay scroll horizontal y «Tu cita» no se muestra.
 - **Verificación hecha:** `pnpm build` (`tsc -b && vite build`) pasa y `pnpm lint` (`oxlint`) no reporta nada. Además se recorrieron estos pasos en un Chrome sin interfaz contra `pnpm dev` (con `StrictMode`): 108 comprobaciones, todas correctas, sin errores ni avisos en la consola y sin peticiones externas, con anchos de 360, 375, 768 y 1280 px y sin scroll horizontal en ninguno (también con los errores a la vez al enviar vacío, con nombres de 70 caracteres sin espacios en el cuadro y en la tarjeta a 360 px, y con «Cancelar» y «Confirmar reserva» en la misma fila a 360 px). Incluyen: los ocho errores a la vez, la cascada, las tres marcas de paso, «Tu cita» pegado a 24 px al hacer scroll, cancelar sin ocupar turno, doble clic con un solo `DEMO-001`, 09:00 ocupado solo para ese médico y fecha, el teclado (Espacio, flechas y la flecha hacia el turno ocupado), el contraste calculado de la tabla de arriba y `prefers-reduced-motion` (cuadro a 0 s; icono y tarjeta solo con opacidad). La prueba usó `puppeteer-core` instalado en una carpeta temporal fuera del proyecto; no es una dependencia del proyecto. Pendiente: ver la pantalla en un móvil real (el sticky y la entrada de la tarjeta nueva se probaron solo en Chrome de escritorio).
 - **Alcance:** no se modificaron `src/demo/datos.ts`, `src/demo/esquema.ts`, `src/App.tsx`, `docs/specs/*`, los casos de uso ni `fase-01.md`, `fase-02.md` y `fase-03.md`. Las secciones de las tareas 3 y 4 de este archivo no se editaron.
+
+## Taller 5: integración continua con GitHub Actions (tarea 6, 2026-11-24)
+
+- **Origen:** tarea 6 del harness y Taller 5 del curso: crear un pipeline de integración continua (CI) con GitHub Actions que instale las dependencias y compile el proyecto, probarlo con un error a propósito y entregar un PDF de dos páginas con las capturas. El estudiante pidió completar el taller, incluidos los commits y el envío a GitHub (repositorio público `Wilo1233/proyecto-bootcamp`). Esta sección no reemplaza a ninguna anterior: «tarea 5» sigue siendo el rediseño visual de la demo.
+- **Dependencias:** ninguna nueva ni cambiada en npm; `package.json` y `pnpm-lock.yaml` no se tocaron. El workflow usa tres acciones de GitHub, cuyas versiones mayores se comprobaron el 24 de noviembre de 2026 con la API de lanzamientos (`gh api repos/<acción>/releases/latest`): `actions/checkout@v7` (última v7.0.1), `pnpm/action-setup@v6` (v6.1.1) y `actions/setup-node@v7` (v7.1.0). Según su `action.yml`, las tres corren con Node 24.
+- **Qué cambió, por archivo:**
+  - `.github/workflows/ci.yml` (nuevo): el pipeline. Se dispara en `push` a cualquier rama y en `pull_request`; permisos `contents: read`; un trabajo «Build» en `ubuntu-latest` con límite de 10 minutos y estos pasos: `checkout` (con `persist-credentials: false`), `pnpm/action-setup`, `setup-node` (Node 24, `cache: pnpm`), `pnpm install --frozen-lockfile` y `pnpm build`.
+  - `docs/entregas/taller-05-ci.md` y `docs/entregas/taller-05-ci.pdf` (nuevos): la entrega, en dos páginas A4, con las dos capturas en `docs/entregas/taller-05-ci/` (`run-fallida.png` y `run-exitosa.png`).
+  - `README.md`: la insignia del estado del CI bajo el título y una sección breve «Integración continua».
+  - `docs/proceso.md`: esta sección.
+- **Decisiones:**
+  - **pnpm sin `version`:** `pnpm/action-setup` lee `packageManager` (`pnpm@11.17.0`). Si además se escribe `version` y difiere, la acción se detiene con «Multiple versions of pnpm specified».
+  - **Orden de los pasos:** primero pnpm y después `setup-node`, porque `cache: pnpm` necesita pnpm ya instalado para calcular la carpeta de caché. Se usa una sola caché (la de `setup-node`); desde la versión 6 la caché automática de `setup-node` es solo de npm, así que `cache: pnpm` es explícito.
+  - **Node 24** y no `node-version-file`: el campo `engines` dice `>=22.22.0`, un rango abierto que se resolvería a la versión más nueva de Node. Node 24 cumple el rango y es LTS; en local se usa Node 22.23.4.
+  - **`--frozen-lockfile`** a propósito: si `pnpm-lock.yaml` no coincide con `package.json`, el CI falla en vez de instalar otra cosa.
+  - **Permisos y concurrencia:** solo lectura, porque el trabajo nunca escribe en el repositorio. Una ejecución nueva de un `pull_request` cancela la anterior; las de `push` no se cancelan, para que las ejecuciones roja y verde de la prueba queden registradas.
+  - **Solo instala y compila:** `pnpm build` ya revisa los tipos (`tsc -b`) y compila (`vite build`). No se añadió `pnpm lint` porque el taller no lo pide.
+  - **El error se hizo en una rama aparte** (`prueba/ci-error`) y esa rama no se fusionó: `main` nunca tuvo el error.
+- **Prueba con error controlado:**
+  - **Cambio:** en `src/demo/datos.ts`, línea 26, `id: 'general',` pasó a `id: 42,`. La interfaz `Especialidad` declara `id: string`. Es solo un error de tipos: `vite build` no lo detectaría, `tsc -b` sí.
+  - **Línea del registro del paso Build:** `src/demo/datos.ts(26,5): error TS2322: Type 'number' is not assignable to type 'string'.`, seguida de `Command failed with exit code 2.` y `Process completed with exit code 2.` GitHub la mostró además como anotación sobre `src/demo/datos.ts#L26`.
+  - **Solución:** se restauró `id: 'general',` en la misma rama y se subió. El contenido de la rama quedó idéntico al de `main` (`git diff main` vacío).
+- **Ejecuciones registradas** (todas en `https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/<número>`):
+
+  | Rama | Commit | Resultado | Número |
+  |---|---|---|---|
+  | `main` | `b00c09a` Agregar pipeline de CI con GitHub Actions | Éxito (22 s) | 45527350114 |
+  | `prueba/ci-error` | `c80c2e2` Prueba CI: introducir error de tipos controlado | Fallo, paso Build (19 s) | 45527431210 |
+  | `prueba/ci-error` | `3806720` Prueba CI: corregir error de tipos | Éxito (22 s) | 45527507707 |
+
+  El commit que añade este texto y el PDF a `main` dispara otra ejecución, visible en la pestaña Actions.
+- **Cómo demostrarlo, paso a paso:**
+  1. Abrir `https://github.com/Wilo1233/proyecto-bootcamp/actions` y ver las ejecuciones de «CI»: dos verdes y una roja (la de la rama `prueba/ci-error`).
+  2. Abrir la ejecución roja (`…/runs/45527431210`): en «Annotations» aparece el error de `src/demo/datos.ts`, línea 26. Con la sesión de GitHub iniciada, el paso «Build» muestra el registro completo; con `gh run view 45527431210 --log-failed` también se ve desde la terminal.
+  3. Reproducirlo en local sin riesgo: `git switch -c prueba/local`, cambiar `id: 'general',` por `id: 42,` en la línea 26 de `src/demo/datos.ts` y ejecutar `pnpm build`: falla con el mismo error TS2322. Volver a poner `'general'` y deja de fallar.
+- **Verificación hecha:** las tres ejecuciones terminaron como se esperaba (verde, rojo y verde; se comprobó el estado con `gh run view`); el registro fallido contiene la línea TS2322 de arriba; `pnpm build` local en `main` pasa; el PDF mide A4 y tiene dos páginas (se contaron las páginas del archivo y se revisó cada una convertida a imagen). Las capturas se sacaron con Chrome sin interfaz de las páginas públicas de cada ejecución; la página del trabajo («job») exige iniciar sesión para ver el registro, por eso se usó la página de resumen de la ejecución, que sí muestra la anotación del error. El PDF se imprimió con `--print-to-pdf` desde un HTML temporal que no está en el repositorio. Pendiente: no se probó el workflow con un `pull_request` real; el taller solo pide la ejecución por `push`.
+- **Alcance:** en `main` no se modificó nada de `src/`, ni `package.json`, `pnpm-lock.yaml`, `docs/specs/*`, los casos de uso, `fase-01.md`, `fase-02.md`, `fase-03.md` o las secciones anteriores de este archivo. La rama `prueba/ci-error` queda en GitHub como evidencia.
