@@ -23,7 +23,7 @@ export interface Especialidad {
 
 export const ESPECIALIDADES: Especialidad[] = [
   {
-    id: 42,
+    id: 'general',
     nombre: 'Medicina General',
     medicos: [
       {
