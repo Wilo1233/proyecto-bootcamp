@@ -64,7 +64,7 @@ export function Presentacion() {
     >
       <Container size="lg">
         <Title order={1} mb="xs">
-          Reserva un turno para tu familiar
+                              Reserva un turno para tu familiar 🚀 (desplegado automáticamente)
         </Title>
         <Text size="lg" c="dimmed" maw={640} mb="lg">
           Elige especialidad, médico y horario en tres pasos y revisa todo antes
