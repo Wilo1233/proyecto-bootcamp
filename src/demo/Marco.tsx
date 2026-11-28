@@ -63,9 +63,14 @@ export function Presentacion() {
       style={{ borderBottom: '1px solid var(--mantine-color-gray-2)' }}
     >
       <Container size="lg">
-        <Title order={1} mb="xs">
-                              Reserva un turno para tu familiar 🚀 (desplegado automáticamente)
-        </Title>
+        <Group gap="md" align="center" mb="xs">
+          <Title order={1}>
+            Reserva un turno para tu familiar 🚀 (desplegado automáticamente)
+          </Title>
+          <Badge color="clinica" variant="filled" size="lg">
+            Versión 2.0
+          </Badge>
+        </Group>
         <Text size="lg" c="dimmed" maw={640} mb="lg">
           Elige especialidad, médico y horario en tres pasos y revisa todo antes
           de confirmar.
