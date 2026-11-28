@@ -1,9 +1,13 @@
 name: CI
 
 on:
+  # Control: el despliegue solo se evalúa al hacer push a main
   push:
-    branches: ['**']
+    branches: [main]
+  # Control: todo PR hacia main se valida (lint + build) antes de poder integrarse
   pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
@@ -36,6 +40,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Lint
+        run: pnpm lint
+
       - name: Build
         run: pnpm build
 
@@ -49,9 +56,11 @@ jobs:
     name: Deploy AWS S3
     runs-on: ubuntu-latest
 
+    # Control: el deploy depende de Build; si Build falla, Deploy no se ejecuta
     needs: build
 
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    # Control: solo se despliega desde main y por push (nunca desde un PR)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     steps:
       - name: Descargar artefacto
