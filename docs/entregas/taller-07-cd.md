@@ -1,6 +1,6 @@
 # Taller 7 — Despliegue continuo en Amazon S3 con GitHub Actions
 
-> Estado: el workflow y la documentación están escritos, pero **todavía no se ha hecho un despliegue real**. Todo lo que depende de una ejecución real (URL pública, enlaces a ejecuciones, capturas y la prueba del cambio visual) está marcado como **Pendiente**; no se ha inventado ningún dato.
+> Estado: **desplegado y verificado**. El sitio está publicado en Amazon S3 y se comprobó el despliegue continuo con un cambio visual real: el commit `1d7795d` cambió el título de la demo, el pipeline lo desplegó solo y el sitio mostró el título nuevo. Los datos de esta entrega salen de ejecuciones reales de GitHub Actions; la entrega en PDF está en [`taller-07-cd.pdf`](taller-07-cd.pdf).
 
 ## 1. Identificación
 
@@ -13,7 +13,7 @@
 | Fecha | 26 de noviembre de 2026 |
 | Repositorio | <https://github.com/Wilo1233/proyecto-bootcamp> |
 | Workflow | <https://github.com/Wilo1233/proyecto-bootcamp/actions/workflows/ci.yml> |
-| Sitio publicado | Pendiente (formato: `http://<bucket>.s3-website-<región>.amazonaws.com`) |
+| Sitio publicado | <http://wilo-proyecto-bootcamp-2026.s3-website-us-east-1.amazonaws.com> (HTTP; formato `http://<bucket>.s3-website-<región>.amazonaws.com`) |
 
 ## 2. El pipeline
 
@@ -73,7 +73,7 @@ Se hace a mano en la consola de AWS:
    }
    ```
 
-La dirección del sitio tiene el formato `http://<bucket>.s3-website-<región>.amazonaws.com` (sin HTTPS: el alojamiento de sitios web de S3 solo sirve HTTP).
+La dirección del sitio tiene el formato `http://<bucket>.s3-website-<región>.amazonaws.com` (sin HTTPS: el alojamiento de sitios web de S3 solo sirve HTTP). Si el sitio responde 403, revisa que la política del bucket sea esta y no bloquee el acceso por HTTP (ver 5.4).
 
 ### 4.2. Secretos y variables en GitHub
 
@@ -91,25 +91,45 @@ En el repositorio: «Settings» → «Secrets and variables» → «Actions». A
 
 ## 5. Evidencia de la ejecución
 
-Todo lo de esta sección es **Pendiente** hasta hacer un despliegue real.
+Los datos son de ejecuciones reales del repositorio; todo lo de esta sección se puede comprobar en la pestaña Actions y abriendo la URL pública.
 
-| Evidencia | Estado |
+| Evidencia | Dato |
 |---|---|
-| Ejecución de `main` con «Build» y «Deploy AWS S3» en verde | Pendiente (enlace: `https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/<número>`) |
-| URL pública del sitio | Pendiente |
-| Captura 1: ejecución con los dos trabajos en verde | Pendiente |
-| Captura 2: el sitio abierto desde la URL pública | Pendiente |
-| Cambio visual: un cambio pequeño y visible en la demo, subido a `main` | Pendiente (qué se cambió) |
-| Captura 3: el mismo sitio mostrando el cambio tras el nuevo despliegue | Pendiente |
+| Despliegue inicial (CI #5) | Commit `a9c5bc5` «Agregar despliegue continuo a Amazon S3» en `main`: «Build» 28 s y «Deploy AWS S3» 11 s, ambos en verde (44 s en total). Ejecución: <https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/45922390920> |
+| URL pública del sitio | <http://wilo-proyecto-bootcamp-2026.s3-website-us-east-1.amazonaws.com> (responde 200) |
+| Cambio visual (CI #6) | Commit `1d7795d` «Cambiar título para validar despliegue continuo» en `main`: éxito. Ejecución: <https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/45923582000> |
+| Bundle publicado | `assets/index-CFIf3jOZ.js` antes del cambio; `assets/index-w_drP2oF.js` después (Vite cambia el nombre cuando cambia el contenido) |
 
-Al tomar las capturas del registro hay que tapar los datos de la cuenta: `aws sts get-caller-identity` imprime el identificador de la cuenta y el ARN de quien despliega. Tampoco se pegan valores de secretos.
+### 5.1. Pipeline exitoso
+
+La captura 1 es la pestaña Actions con las ejecuciones de «CI»: **CI #5** (`a9c5bc5`, el primer despliegue) y **CI #6** (`1d7795d`, el cambio visual) en verde, sobre las del Taller 5 (la roja, `CI #2`, es la prueba con error de ese taller).
+
+![Captura 1: pestaña Actions con CI #5 (a9c5bc5) y CI #6 (1d7795d) en verde](taller-07-cd/ejecuciones.png)
+
+### 5.2. Antes del cambio
+
+Tras CI #5 el sitio ya estaba publicado en la URL pública. El título de la demo era «Reserva un turno para tu familiar» (captura 2).
+
+![Captura 2: sitio publicado en S3 antes del cambio, título «Reserva un turno para tu familiar»](taller-07-cd/sitio-antes.png)
+
+### 5.3. El cambio y el despliegue automático
+
+El cambio es una sola línea visible: en `src/demo/Marco.tsx` el título pasó de «Reserva un turno para tu familiar» a «Reserva un turno para tu familiar 🚀 (desplegado automáticamente)». Se subió a `main` con el commit `1d7795d`; el pipeline corrió solo (CI #6, éxito) y, sin tocar nada más, el sitio mostró el título nuevo (captura 3). El archivo principal publicado cambió de `index-CFIf3jOZ.js` a `index-w_drP2oF.js`.
+
+![Captura 3: sitio publicado tras CI #6 (1d7795d), con el título «... 🚀 (desplegado automáticamente)»](taller-07-cd/sitio-despues.png)
+
+### 5.4. Incidente resuelto: respuesta 403
+
+Durante la preparación, el sitio respondió 403 (acceso denegado): la política que tenía el bucket entonces bloqueaba el acceso por HTTP, y el endpoint de sitio web de S3 solo sirve HTTP. Se reemplazó por una política simple de lectura pública, con `Allow` a `*` sobre `s3:GetObject` (la plantilla de la sección 4.1), y el sitio pasó a responder 200. No hizo falta cambiar el workflow.
+
+Las capturas no muestran datos de la cuenta de AWS ni valores de secretos; en la documentación tampoco hay identificadores de cuenta ni ARN.
 
 ## 6. Resumen de ejecuciones
 
 | Rama | Commit | Resultado | Ejecución |
 |---|---|---|---|
-| `main` | Pendiente | Pendiente (primer despliegue) | Pendiente |
-| `main` | Pendiente | Pendiente (despliegue tras el cambio visual) | Pendiente |
+| `main` | `a9c5bc5` Agregar despliegue continuo a Amazon S3 (CI #5, primer despliegue) | Éxito: «Build» 28 s y «Deploy AWS S3» 11 s | [45922390920](https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/45922390920) |
+| `main` | `1d7795d` Cambiar título para validar despliegue continuo (CI #6, cambio visual) | Éxito | [45923582000](https://github.com/Wilo1233/proyecto-bootcamp/actions/runs/45923582000) |
 
 ## 7. Límites conocidos
 
@@ -118,4 +138,4 @@ Al tomar las capturas del registro hay que tapar los datos de la cuenta: `aws st
 - **Solo HTTP:** el alojamiento de sitios web de S3 no ofrece HTTPS; hacerlo requeriría CloudFront, fuera del taller.
 - **Credenciales temporales:** cada sesión del laboratorio exige renovar los tres secretos (sección 4.2).
 
-**Conclusión.** Pendiente: se escribirá después de la primera ejecución real del despliegue, con el enlace a la ejecución, la URL pública y las capturas.
+**Conclusión.** El despliegue continuo funciona de punta a punta: un `push` a `main` compila la demo, guarda `dist/` como artefacto y «Deploy AWS S3» lo publica en el bucket sin pasos manuales. Lo comprobó un cambio real: el commit `1d7795d` cambió el título en `src/demo/Marco.tsx`, CI #6 terminó en verde y el sitio público pasó a mostrar el título nuevo, con otro archivo principal (`index-CFIf3jOZ.js` → `index-w_drP2oF.js`). El único tropiezo fue un 403 al abrir el sitio, que se resolvió reemplazando la política del bucket por una de lectura pública simple.
