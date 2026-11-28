@@ -1633,3 +1633,34 @@ Cómo usé la IA. Usé Claude Code con AHK 3.0.0 y el MCP del proyecto para el t
   4. Comprobar que el archivo publicado coincide con el cambio: el HTML del sitio carga `assets/index-w_drP2oF.js`; `pnpm build` en local genera ese mismo nombre.
 - **Verificación hecha:** el PDF tiene 2 páginas (se contó `/Type /Page` en el archivo y con un lector de PDF), tamaño A4 (`MediaBox 0 0 594.96 841.92`), productor Skia/PDF m158 (impresión de Chrome) y fuentes Segoe UI y Consolas incrustadas; se renderizó cada página a imagen y se revisó que se lea la URL, el título cambiado, CI #5 y CI #6 en verde, y que no haya franja de pestañas. En el texto del PDF no aparecen rutas locales, el nombre de usuario de Windows, `AKIA` ni `arn:aws`. Se comprobó con `curl` que el sitio responde 200 y que su HTML carga `index-w_drP2oF.js`. `grep Pendiente` en `docs/entregas/taller-07-cd.md` ya no devuelve nada. `pnpm build` local pasa y genera `index-w_drP2oF.js`. Pendiente: las credenciales de AWS Academy caducan al terminar la sesión del laboratorio, así que un despliegue nuevo exige renovar los tres secretos (la sección 4.2 de la entrega lo explica); no se comprobó qué pasa con el bucket cuando el laboratorio se reinicia.
 - **Alcance:** no se modificó nada de `src/`, ni `package.json`, `pnpm-lock.yaml`, `.github/workflows/ci.yml`, `docs/specs/*`, los casos de uso, `fase-01.md`, `fase-02.md`, `fase-03.md`, `taller-05-ci.md` o las secciones anteriores de este archivo.
+
+## Taller 8: despliegue seguro y control de versiones (tarea 9, 2026-11-27)
+
+- **Origen:** tarea 9 del harness: demostrar un flujo de despliegue seguro con una rama, un pull request (PR) que falla a propósito, su corrección y la fusión a `main`, y dejar la entrega en `docs/entregas/taller-08-despliegue-seguro.md` y su PDF, `docs/entregas/taller-08-despliegue-seguro.pdf`, con las seis capturas (3 páginas A4).
+- **Dependencias:** ninguna. `package.json`, `pnpm-lock.yaml` y `src/` no cambiaron salvo el cambio visual de `src/demo/Marco.tsx` descrito abajo. Las capturas se redujeron a 1280 px de ancho con Pillow, instalado fuera del proyecto.
+- **Controles** (`.github/workflows/ci.yml`, commit `d2dc9ec` «Restringir pipeline: validar PR hacia main y desplegar solo desde main»):
+  - `pull_request` solo hacia `main`, con los tipos `opened`, `synchronize` y `reopened`; `push` solo en `main`.
+  - «Build» ejecuta `pnpm lint` y `pnpm build` como validaciones.
+  - «Deploy AWS S3» tiene `needs: build` y `if: github.event_name == 'push' && github.ref == 'refs/heads/main'`: un PR nunca despliega y, si «Build» falla, tampoco.
+  - Esto deja sin efecto la frase del Taller 7 «se ejecuta en cada `push` y en cada `pull_request`»: desde este commit solo se ejecuta en `push` a `main` y en PR hacia `main`.
+- **Qué se hizo, en orden:**
+
+  | Paso | Commit / evento | Resultado | Ejecución |
+  |---|---|---|---|
+  | Rama `feature/release-v2` y PR #1 «Release v2.0» | `5a50185` muestra la insignia «Versión 2.0» junto al título (`src/demo/Marco.tsx`) | PR abierto hacia `main` | — |
+  | Error intencional | `cb3d627` deja sin cerrar la etiqueta `Title` | Lint falla (`Marco.tsx:72:11 Expected corresponding JSX closing tag for 'Title'`); «Build» en rojo; «Deploy AWS S3» omitido; el sitio sigue igual | `46106983029` |
+  | Corrección | `e3cee48` cierra la etiqueta | «Build» éxito; «Deploy AWS S3» omitido (es un PR); el sitio sigue sin «Versión 2.0» (se comprobó en el bundle) | `46107362106` |
+  | Fusión del PR #1 | `65204de` (`gh pr merge 1 --merge`, sin borrar la rama) | «Build» éxito y «Deploy AWS S3» éxito | `46110469609` |
+
+- **Verificación del sitio tras la fusión:** `http://wilo-proyecto-bootcamp-2026.s3-website-us-east-1.amazonaws.com` responde 200; su `index.html` carga `assets/index-DzYFkNZ5.js` (antes `index-w_drP2oF.js`) y ese archivo contiene «Versión 2.0».
+- **Decisiones:**
+  - **Fusión:** con commit de fusión (`--merge`), para que el historial muestre el PR; la rama `feature/release-v2` se conservó. La fusión la autorizó el estudiante de forma explícita para este paso.
+  - **Qué cuenta como evidencia:** las capturas del PR abierto, de la ejecución fallida (con las anotaciones de oxlint), del sitio antes del cambio y de la ejecución del PR en verde con «Deploy AWS S3» omitido, más las dos finales (ejecución en `main` y sitio con «Versión 2.0»), que se añadieron al cerrar la entrega.
+  - **Privacidad:** las capturas y el Markdown no tienen valores de secretos, identificadores de cuenta de AWS ni ARN.
+- **Cómo demostrarlo, paso a paso:**
+  1. Abrir `docs/entregas/taller-08-despliegue-seguro.md` (o su PDF): controles, evidencia en cuatro pasos y tabla de ejecuciones.
+  2. En <https://github.com/Wilo1233/proyecto-bootcamp/pull/1>: PR fusionado con el commit `65204de`.
+  3. En la pestaña Actions: `46106983029` en rojo (Build) con «Deploy AWS S3» omitido, `46107362106` en verde con «Deploy AWS S3» omitido y `46110469609` con los dos trabajos en verde.
+  4. Abrir el sitio publicado: la cabecera muestra la insignia «Versión 2.0».
+- **Cierre de la entrega:** se añadieron `run-main-deploy.png` y `sitio-v2.png` (1280 px de ancho, en RGB, como las demás) y se generó el PDF con el mismo método del Taller 7: un HTML temporal fuera del repositorio (Segoe UI y Consolas, `@page` A4 con márgenes de 14 mm, las capturas de dos en dos en una cuadrícula de dos columnas) impreso con `chrome.exe --headless --disable-gpu --no-pdf-header-footer --print-to-pdf`. El PDF tiene 3 páginas A4 (se contaron con un lector de PDF) y en su texto no aparecen rutas locales, `AKIA`, `ASIA` ni `arn:aws`; el HTML temporal se borró. En el `README.md` se corrigieron las frases que decían que el workflow corre en todo `push` y `pull_request` (párrafo de «Integración continua» y subsección del Taller 7), que quedaron como descripción histórica del Taller 5 y del Taller 7. Las credenciales de AWS Academy caducan al terminar la sesión del laboratorio; un despliegue nuevo exige renovar los tres secretos.
+- **Alcance:** no se modificó nada de `.github/workflows/ci.yml` en esta etapa, ni `package.json`, `pnpm-lock.yaml`, `docs/specs/*`, los casos de uso, `fase-01.md`, `fase-02.md`, `fase-03.md` o las secciones anteriores de este archivo.
