@@ -66,7 +66,6 @@ export function Presentacion() {
         <Group gap="md" align="center" mb="xs">
           <Title order={1}>
             Reserva un turno para tu familiar 🚀 (desplegado automáticamente)
-          </Title>
           <Badge color="clinica" variant="filled" size="lg">
             Versión 2.0
           </Badge>
